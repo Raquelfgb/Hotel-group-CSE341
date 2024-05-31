@@ -1,120 +1,96 @@
-const mongodb = require('../database/database');
+const mongodb = require('../data/database');
 const ObjectId = require('mongodb').ObjectId;
 
-const DATABASE = "HotelierPro";
-const COLLECTION_NAME = "bookings";
-
-const getAllBookings = async (req, res) => {
-  console.log("getAllBookings");
-  const result = await mongodb
-    .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .find();
-  console.log("result: " + JSON.stringify(result));
-
-
-  console.log("mongodb: " + mongodb);
-  
-  console.log("mongo: " + (await mongodb.getDatabase())[0]
-  )
-  // Object.entries(((await mongodb.getDatabase()
-  //   .db(DATABASE).listCollections())[0])).forEach(([key,val]) => {
-  //     console.log("kay: " + key + " value: " + val);
-  //   });
-  
-  result.toArray((err, lists) => {
-    if (err) {
-      res.status(400).json({ message: err });
-    }
+const getAll = async (req, res) => {  // GET Request
+  //#swagger.tags=['Bookings']
+  const result = await mongodb.getDatabase().db().collection('bookings').find();
+  result.toArray().then((bookings) => {
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(lists);
+    res.status(200).json(bookings);
   });
-
-  // .then((users) => {
-  //   res.setHeader('Content-Type', 'application/json');
-  // res.status(200).json(users);
-  // });
 };
 
-const getSingleBookings = async (req, res) => {
-  const bookingsId = new ObjectId(req.params.id);
-  const result = await mongodb
-    .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .find({ _id: bookingsId });
-  result.toArray((err, result) => {
-    if (err) {
-      res.status(400).json({ message: err });
-    }
+const getSingle = async (req, res) => { // GET Request
+  //#swagger.tags=['Bookings']
+  if (!ObjectId.isValid(req.params.id)) {
+    res.status(400).json('Must have a valid booking id to get a single booking');
+  }
+  const bookingId = new ObjectId(req.params.id);
+  const result = await mongodb.getDatabase().db().collection('bookings').find({ _id: bookingId });
+  result.toArray().then((bookings) => {
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(result[0]);
+    res.status(200).json(bookings);
   });
-
-  // .then((users) => {
-  //   res.setHeader('Content-Type', 'application/json');
-  //   res.status(200).json(users[0]);
-  // });
 };
 
-const createBookings = async (req, res) => {
-  const bookings = {
-    bookings_id: req.body.id,
-    limit: req.body.limit
-
+const createBooking = async (req, res) => { // POST Request
+  //#swagger.tags=['Bookings']
+  const booking = {
+    checkInDate: req.body.checkInDate,
+    checkOutDate: req.body.checkOutDate,
+    roomType: req.body.roomType,
+    roomNumber : req.body.roomNumber,
+    numOfGuests: req.body.numOfGuests,
+    totalPrice: req.body.totalPrice,
+    bookingDate : req.body.bookingDate
   };
-  const response = await mongodb
-    .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .insertOne(bookings);
-
-  console.log('response: ' + JSON.stringify(response));
-  if (response.acknowledged == true) {
+  const response = await mongodb.getDatabase().db().collection('bookings').insertOne(booking);
+  if (response.acknowledged) {
     res.status(201).send();
   } else {
-    res.status(500).json(response.error || 'Failed to create user.');
+    res.status(500).json(response.error || 'An error occurred while creating the booking.');
   }
 };
-const updateBookings = async (req, res) => {
-  const bookingsId = new ObjectId(req.params.id);
-  const bookings = {
-    bookings_id: req.body.id,
-    limit: req.body.limit
+
+const updateBooking = async (req, res) => { // PUT Request
+  //#swagger.tags=['Bookings']
+  if (!ObjectId.isValid(req.params.id)) {
+    res.status(400).json('You must have a valid booking id to update a booking');
+  }
+  const bookingId = new ObjectId(req.params.id);
+  const booking = {
+    checkInDate: req.body.checkInDate,
+    checkOutDate: req.body.checkOutDate,
+    roomType: req.body.roomType,
+    roomNumber : req.body.roomNumber,
+    numOfGuests: req.body.numOfGuests,
+    totalPrice: req.body.totalPrice,
+    bookingDate : req.body.bookingDate
   };
   const response = await mongodb
     .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .replaceOne({ _id: bookingsId }, bookings);
-  console.log('response: ' + JSON.stringify(response));
+    .db()
+    .collection('bookings')
+    .replaceOne({ _id: bookingId }, booking);
   if (response.modifiedCount > 0) {
     res.status(204).send();
   } else {
-    res.status(500).json(response.error || 'Failed to update user.');
+    res.status(500).json(response.error || 'An error occurred while updating the booking.');
   }
 };
-const deleteBookings = async (req, res) => {
-  const bookingsId = new ObjectId(req.params.id);
 
+const deleteBooking = async (req, res) => { // DELETE Request
+  //#swagger.tags=['Bookings']
+  if (!ObjectId.isValid(req.params.id)) {
+    res.status(400).json('You must have a valid booking id to delete a booking');
+  }
+  const bookingId = new ObjectId(req.params.id);
   const response = await mongodb
     .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .deleteOne({ _id: bookingsId });
-  console.log('response: ' + JSON.stringify(response));
+    .db()
+    .collection('bookings')
+    .deleteOne({ _id: bookingId });
   if (response.deletedCount > 0) {
     res.status(204).send();
   } else {
-    res.status(500).json(response.error || 'Failed to update user.');
+    res.status(500).json(response.error || 'An error occurred while deleting the booking.');
   }
 };
 
 module.exports = {
-  getAllBookings,
-  getSingleBookings,
-  createBookings,
-  updateBookings,
-  deleteBookings
+  getAll,
+  getSingle,
+  createBooking,
+  updateBooking,
+  deleteBooking
 };

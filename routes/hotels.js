@@ -1,13 +1,20 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const validation = require('../middleware/validate');
-const hotelsController = require('../controllers/hotels');
-const { isAuthenticated } = require('../middleware/authenticate');
 
-router.get('/', hotelsController.getAllHotels);
-router.get('/:id', hotelsController.getSingleHotels);
-router.post('/',isAuthenticated, hotelsController.createHotels);
-router.put('/:id',isAuthenticated, hotelsController.updateHotels);
-router.delete('/:id',isAuthenticated, hotelsController.deleteHotels);
+const hotelsController = require("../controllers/hotels.js");
+const validation = require('../middleware/validate.js');
+
+// GET Requests
+router.get("/", hotelsController.getAll);
+router.get("/:id", hotelsController.getSingle);
+
+// POST or create Request
+router.post('/', validation.saveHotel, hotelsController.createHotel);
+
+// PUT or update Request
+router.put('/:id', validation.saveHotel, hotelsController.updateHotel);
+
+// DELETE Request
+router.delete('/:id', hotelsController.deleteHotel);
 
 module.exports = router;

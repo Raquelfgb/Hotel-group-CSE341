@@ -1,122 +1,96 @@
-const mongodb = require('../database/database');
+const mongodb = require('../data/database');
 const ObjectId = require('mongodb').ObjectId;
 
-const DATABASE = "HotelierPro";
-const COLLECTION_NAME = "hotels";
-
-const getAllHotels = async (req, res) => {
-  console.log("getAllHotels");
-  const result = await mongodb
-    .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .find();
-  console.log("result: " + JSON.stringify(result));
-
-
-  console.log("mongodb: " + mongodb);
-  
-  console.log("mongo: " + (await mongodb.getDatabase())[0]
-  )
-  // Object.entries(((await mongodb.getDatabase()
-  //   .db(DATABASE).listCollections())[0])).forEach(([key,val]) => {
-  //     console.log("kay: " + key + " value: " + val);
-  //   });
-  
-  result.toArray((err, lists) => {
-    if (err) {
-      res.status(400).json({ message: err });
-    }
+const getAll = async (req, res) => {  // GET Request
+  //#swagger.tags=['Hotels']
+  const result = await mongodb.getDatabase().db().collection('hotels').find();
+  result.toArray().then((hotels) => {
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(lists);
+    res.status(200).json(hotels);
   });
-
-  // .then((users) => {
-  //   res.setHeader('Content-Type', 'application/json');
-  // res.status(200).json(users);
-  // });
 };
 
-const getSingleHotels = async (req, res) => {
-  const hotelsId = new ObjectId(req.params.id);
-  const result = await mongodb
-    .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .find({ _id: hotelsId });
-  result.toArray((err, result) => {
-    if (err) {
-      res.status(400).json({ message: err });
-    }
+const getSingle = async (req, res) => { // GET Request
+  //#swagger.tags=['Hotels']
+  if (!ObjectId.isValid(req.params.id)) {
+    res.status(400).json('Must have a valid hotel id to get a single hotel');
+  }
+  const hotelId = new ObjectId(req.params.id);
+  const result = await mongodb.getDatabase().db().collection('hotels').find({ _id: hotelId });
+  result.toArray().then((hotels) => {
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(result[0]);
+    res.status(200).json(hotels);
   });
-
-  // .then((users) => {
-  //   res.setHeader('Content-Type', 'application/json');
-  //   res.status(200).json(users[0]);
-  // });
 };
 
-const createHotels = async (req, res) => {
-  const hotels = {
-    hotels_id: 'required|integer',
-    rooms: 'required|integer',
-    type: 'array'
-
+const createHotel = async (req, res) => { // POST Request
+  //#swagger.tags=['Hotels']
+  const hotel = {
+    name: req.body.name,
+    location: req.body.location,
+    rating: req.body.rating,
+    roomsAvailable: req.body.roomsAvailable,
+    amenities: req.body.amenities,
+    pricePerNight: req.body.pricePerNight,
+    contactEmail: req.body.contactEmail
   };
-  const response = await mongodb
-    .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .insertOne(hotels);
-
-  console.log('response: ' + JSON.stringify(response));
-  if (response.acknowledged == true) {
+  const response = await mongodb.getDatabase().db().collection('hotels').insertOne(hotel);
+  if (response.acknowledged) {
     res.status(201).send();
   } else {
-    res.status(500).json(response.error || 'Failed to create user.');
+    res.status(500).json(response.error || 'An error occurred while creating the hotel.');
   }
 };
-const updateHotels = async (req, res) => {
-  const hotelsId = new ObjectId(req.params.id);
-  const hotels = {
-    hotels_id: req.body.id,
-    limit: req.body.limit,
-    products: req.body.product,
+
+const updateHotel = async (req, res) => { // PUT Request
+  //#swagger.tags=['Hotels']
+  if (!ObjectId.isValid(req.params.id)) {
+    res.status(400).json('You must have a valid hotel id to update a hotel');
+  }
+  const hotelId = new ObjectId(req.params.id);
+  const hotel = {
+    name: req.body.name,
+    location: req.body.location,
+    rating: req.body.rating,
+    roomsAvailable: req.body.roomsAvailable,
+    amenities: req.body.amenities,
+    pricePerNight: req.body.pricePerNight,
+    contactEmail: req.body.contactEmail
   };
   const response = await mongodb
     .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .replaceOne({ _id: hotelsId }, hotels);
-  console.log('response: ' + JSON.stringify(response));
+    .db()
+    .collection('hotels')
+    .replaceOne({ _id: hotelId }, hotel);
   if (response.modifiedCount > 0) {
     res.status(204).send();
   } else {
-    res.status(500).json(response.error || 'Failed to update user.');
+    res.status(500).json(response.error || 'An error occurred while updating the hotel.');
   }
 };
-const deleteHotels = async (req, res) => {
-  const hotelsId = new ObjectId(req.params.id);
 
+const deleteHotel = async (req, res) => { // DELETE Request
+  //#swagger.tags=['Hotels']
+  if (!ObjectId.isValid(req.params.id)) {
+    res.status(400).json('You must have a valid hotel id to delete a hotel');
+  }
+  const hotelId = new ObjectId(req.params.id);
   const response = await mongodb
     .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .deleteOne({ _id: hotelsId });
-  console.log('response: ' + JSON.stringify(response));
+    .db()
+    .collection('hotels')
+    .deleteOne({ _id: hotelId });
   if (response.deletedCount > 0) {
     res.status(204).send();
   } else {
-    res.status(500).json(response.error || 'Failed to update user.');
+    res.status(500).json(response.error || 'An error occurred while deleting the hotel.');
   }
 };
 
 module.exports = {
-  getAllHotels,
-  getSingleHotels,
-  createHotels,
-  updateHotels,
-  deleteHotels
+  getAll,
+  getSingle,
+  createHotel,
+  updateHotel,
+  deleteHotel
 };

@@ -1,13 +1,20 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const validation = require('../middleware/validate.js');
-const bookingsController = require('../controllers/bookings.js');
-const { isAuthenticated } = require('../middleware/authenticate.js');
 
-router.get('/', bookingsController.getAllBookings);
-router.get('/:id', bookingsController.getSingleBookings);
-router.post('/', isAuthenticated, bookingsController.createBookings);
-router.put('/:id',isAuthenticated, validation.bookings, bookingsController.updateBookings);
-router.delete('/:id', isAuthenticated, bookingsController.deleteBookings);
+const bookingsController = require("../controllers/bookings.js");
+const validation = require('../middleware/validate.js');
+
+// GET Requests
+router.get("/", bookingsController.getAll);
+router.get("/:id", bookingsController.getSingle);
+
+// POST or create Request
+router.post('/', validation.saveBooking, bookingsController.createBooking);
+
+// PUT or update Request
+router.put('/:id', validation.saveBooking, bookingsController.updateBooking);
+
+// DELETE Request
+router.delete('/:id', bookingsController.deleteBooking);
 
 module.exports = router;

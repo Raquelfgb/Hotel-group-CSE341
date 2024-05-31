@@ -1,109 +1,95 @@
-const mongodb = require('../database/database');
+const mongodb = require('../data/database');
 const ObjectId = require('mongodb').ObjectId;
 
-const DATABASE = "HotelierPro";
-const COLLECTION_NAME = "staff";
-
-const getAllStaff = async (req, res) => {
-  const result = await mongodb
-    .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .find();
-
-  // console.log("mongodb: " + JSON.stringify(mongodb));
-  // console.log("mongodb.getDatabase(): " + JSON.stringify(mongodb.getDatabase()));
-  // console.log("mongodb.getDatabase().db(): " + JSON.stringify(mongodb.getDatabase().db()));
-  // console.log("mongodb.getDatabase().db().collection(COLLECTION_NAME): " + JSON.stringify(mongodb.getDatabase().db().collection(COLLECTION_NAME)));
-  result.toArray((err, lists) => {
-    if (err) {
-      res.status(400).json({ message: err });
-    }
+const getAll = async (req, res) => {  // GET Request
+  //#swagger.tags=['Staff']
+  const result = await mongodb.getDatabase().db().collection('staff').find();
+  result.toArray().then((staff) => {
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(lists);
+    res.status(200).json(staff);
   });
-
-  // .then((users) => {
-  //   res.setHeader('Content-Type', 'application/json');
-  // res.status(200).json(users);
-  // });
 };
 
-const getSingleStaff = async (req, res) => {
-  const StaffId = new ObjectId(req.params.id);
-  const result = await mongodb
-    .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .find({ _id: StaffId });
-  result.toArray((err, result) => {
-    if (err) {
-      res.status(400).json({ message: err });
-    }
+const getSingle = async (req, res) => { // GET Request
+  //#swagger.tags=['Staff']
+  if (!ObjectId.isValid(req.params.id)) {
+    res.status(400).json('Must have a valid staff id to get a single staff member');
+  }
+  const staffId = new ObjectId(req.params.id);
+  const result = await mongodb.getDatabase().db().collection('staff').find({ _id: staffId });
+  result.toArray().then((staff) => {
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(result[0]);
+    res.status(200).json(staff);
   });
-
-  // .then((users) => {
-  //   res.setHeader('Content-Type', 'application/json');
-  //   res.status(200).json(users[0]);
-  // });
 };
 
-const createStaff = async (req, res) => {
-  const Staff = {
-    staff_id: 'required|integer',
-    name: 'required|integer',
-    position: 'array',
-    role: 'array'
+const createStaff = async (req, res) => { // POST Request
+  //#swagger.tags=['Staff']
+  const staffMember = {
+    name: req.body.name,
+    position: req.body.position,
+    department: req.body.department,
+    email: req.body.email,
+    phone: req.body.phone,
+    hireDate: req.body.hireDate,
+    salary: req.body.salary
+  };
+  const response = await mongodb.getDatabase().db().collection('staff').insertOne(staffMember);
+  if (response.acknowledged) {
+    res.status(201).send();
+  } else {
+    res.status(500).json(response.error || 'An error occurred while creating the staff member.');
+  }
+};
+
+const updateStaff = async (req, res) => { // PUT Request
+  //#swagger.tags=['Staff']
+  if (!ObjectId.isValid(req.params.id)) {
+    res.status(400).json('You must have a valid staff id to update a staff member');
+  }
+  const staffId = new ObjectId(req.params.id);
+  const staffMember = {
+    name: req.body.name,
+    position: req.body.position,
+    department: req.body.department,
+    email: req.body.email,
+    phone: req.body.phone,
+    hireDate: req.body.hireDate,
+    salary: req.body.salary
   };
   const response = await mongodb
     .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .insertOne(Staff);
-
-  console.log('response: ' + JSON.stringify(response));
-  if (response.acknowledged == true) {
-    res.status(201).send();
-  } else {
-    res.status(500).json(response.error || 'Failed to create user.');
-  }
-};
-const updateStaff = async (req, res) => {
-  const StaffId = new ObjectId(req.params.id);
-  const Staff = req.body.clientIds
-  const response = await mongodb
-    .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .replaceOne({ _id: StaffId }, Staff);
-  console.log('response: ' + JSON.stringify(response));
+    .db()
+    .collection('staff')
+    .replaceOne({ _id: staffId }, staffMember);
   if (response.modifiedCount > 0) {
     res.status(204).send();
   } else {
-    res.status(500).json(response.error || 'Failed to update user.');
+    res.status(500).json(response.error || 'An error occurred while updating the staff member.');
   }
 };
-const deleteStaff = async (req, res) => {
-  const StaffId = new ObjectId(req.params.id);
 
+const deleteStaff = async (req, res) => { // DELETE Request
+  //#swagger.tags=['Staff']
+  if (!ObjectId.isValid(req.params.id)) {
+    res.status(400).json('You must have a valid staff id to delete a staff member');
+  }
+  const staffId = new ObjectId(req.params.id);
   const response = await mongodb
     .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .deleteOne({ _id: StaffId });
-  console.log('response: ' + JSON.stringify(response));
+    .db()
+    .collection('staff')
+    .deleteOne({ _id: staffId });
   if (response.deletedCount > 0) {
     res.status(204).send();
   } else {
-    res.status(500).json(response.error || 'Failed to update user.');
+    res.status(500).json(response.error || 'An error occurred while deleting the staff member.');
   }
 };
 
 module.exports = {
-  getAllStaff,
-  getSingleStaff,
+  getAll,
+  getSingle,
   createStaff,
   updateStaff,
   deleteStaff

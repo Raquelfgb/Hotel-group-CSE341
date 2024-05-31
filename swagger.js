@@ -1,17 +1,29 @@
 const swaggerAutogen = require('swagger-autogen')();
+
 const doc = {
   info: {
-    title: 'My API',
-    description: 'Contacts API'
+    title: 'HotelierPro API',
+    description: 'This is an API for HotelierPro application, providing endpoints for managing hotels, staff, clients, and bookings.',
+    version: '1.0.0'
   },
-  host: 'https://hotel-group-cse341.onrender.com',
-  schemes: ['https','http']
+  host: 'hotelierpro-project.onrender.com', 
+  schemes: ['https'], 
+  securityDefinitions: {
+    githubOAuth: {
+      type: 'oauth2',
+      flow: 'accessCode',
+      authorizationUrl: 'https://github.com/login/oauth/authorize',
+      tokenUrl: 'https://github.com/login/oauth/access_token',
+      scopes: {
+        read: 'Grants read access',
+        write: 'Grants write access'
+      }
+    }
+  }
 };
+
 const outputFile = './swagger.json';
 const endpointsFiles = ['./routes/index.js'];
-// generate swagger.json
+
+// Generate Swagger documentation based on endpoint files and configuration
 swaggerAutogen(outputFile, endpointsFiles, doc);
-// Run server after it gets generated
-// swaggerAutogen(outputFile, endpointsFiles, doc).then(async () => {
-//   await import('./index.js');
-// });

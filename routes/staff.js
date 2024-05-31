@@ -1,13 +1,20 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const validation = require('../middleware/validate.js');
-const staffController = require('../controllers/staff.js');
-const { isAuthenticated } = require('../middleware/authenticate.js');
 
-router.get('/', staffController.getAllStaff);
-router.get('/:id', staffController.getSingleStaff);
-router.post('/', isAuthenticated, staffController.createStaff);
-router.put('/:id',isAuthenticated, validation.staff, staffController.updateStaff);
-router.delete('/:id', isAuthenticated, staffController.deleteStaff);
+const staffController = require("../controllers/staff.js");
+const validation = require('../middleware/validate.js');
+
+// GET Requests
+router.get("/", staffController.getAll);
+router.get("/:id", staffController.getSingle);
+
+// POST or create Request
+router.post('/', validation.saveStaff, staffController.createStaff);
+
+// PUT or update Request
+router.put('/:id', validation.saveStaff, staffController.updateStaff);
+
+// DELETE Request
+router.delete('/:id', staffController.deleteStaff);
 
 module.exports = router;

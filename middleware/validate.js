@@ -1,14 +1,15 @@
 const validator = require('../helpers/validate');
 
-const hotels = (req, res, next) => {
+const saveBooking = (req, res, next) => {
   const validationRule = {
-  
-    hotels_id: 'required|integer',
-    rooms: 'required|integer',
-    type: 'array'
+    clientId: 'required|string',
+    hotelId: 'required|string',
+    checkInDate: 'required|string',
+    checkOutDate: 'required|string',
+    roomType: 'required|string',
+    numOfGuests: 'required|integer',
+    totalPrice: 'required|integer'
   };
- 
-
   validator(req.body, validationRule, {}, (err, status) => {
     if (!status) {
       res.status(412).send({
@@ -22,48 +23,16 @@ const hotels = (req, res, next) => {
   });
 };
 
-const staff = (req, res, next) => {
-  const validationRule = {
-  
-    staff_id: 'required|integer',
-    name: 'required|integer',
-    position: 'array',
-    role: 'array'
-  };
- 
-
-  validator(req.body, validationRule, {}, (err, status) => {
-    if (!status) {
-      res.status(412).send({
-        success: false,
-        message: 'Validation failed',
-        data: err
-      });
-    } else {
-      next();
-    }
-  });
-};
-
-const clients = (req, res, next) => {
-  let passValidation = true;
+const saveClient = (req, res, next) => {
   const validationRule = {
     username: 'required|string',
     name: 'required|string',
-    address: 'string',
-    birthdate: 'datetime',
-    email: 'string',
-    active: 'boolean',
-    hotels: 'array'
-  }
-
-  req.body.clientIds.map(id => {
-    passValidation = (typeof id === 'string' || myVar instanceof String) ?
-      true : false;
-  });
- 
-
-
+    address: 'required|string',
+    birthdate: 'required|string',
+    email: 'required|email',
+    membershipStatus: 'required|string',
+    membershipTier: 'required|string'
+  };
   validator(req.body, validationRule, {}, (err, status) => {
     if (!status) {
       res.status(412).send({
@@ -77,20 +46,16 @@ const clients = (req, res, next) => {
   });
 };
 
-const bookings = (req, res, next) => {
-  let passValidation = true;
+const saveHotel = (req, res, next) => {
   const validationRule = {
-    bookings_id: req.body.id,
-    limit: req.body.limit
-  }
-
-  req.body.bookingsId.map(id => {
-    passValidation = (typeof id === 'string' || myVar instanceof String) ?
-      true : false;
-  });
- 
-
-
+    name: 'required|string',
+    location: 'required|string',
+    rating: 'required|integer',
+    roomsAvailable: 'required|integer',
+    amenities: 'required|array',
+    pricePerNight: 'required|integer',
+    contactEmail: 'required|email'
+  };
   validator(req.body, validationRule, {}, (err, status) => {
     if (!status) {
       res.status(412).send({
@@ -104,9 +69,32 @@ const bookings = (req, res, next) => {
   });
 };
 
+const saveStaff = (req, res, next) => {
+  const validationRule = {
+    name: 'required|string',
+    position: 'required|string',
+    department: 'required|string',
+    email: 'required|email',
+    phone: 'required|string',
+    hireDate: 'required|string',
+    salary: 'required|integer'
+  };
+  validator(req.body, validationRule, {}, (err, status) => {
+    if (!status) {
+      res.status(412).send({
+        success: false,
+        message: 'Validation failed',
+        data: err
+      });
+    } else {
+      next();
+    }
+  });
+};
 
 module.exports = {
-  hotels,
-  clients, 
-  staff, bookings
+  saveBooking,
+  saveClient,
+  saveHotel,
+  saveStaff
 };

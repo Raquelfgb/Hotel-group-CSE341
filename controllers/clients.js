@@ -1,112 +1,95 @@
-const mongodb = require('../database/database');
+const mongodb = require('../data/database');
 const ObjectId = require('mongodb').ObjectId;
 
-const DATABASE = "HotelierPro";
-const COLLECTION_NAME = "clients";
-
-const getAllClient = async (req, res) => {
-  const result = await mongodb
-    .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .find();
-
-  // console.log("mongodb: " + JSON.stringify(mongodb));
-  // console.log("mongodb.getDatabase(): " + JSON.stringify(mongodb.getDatabase()));
-  // console.log("mongodb.getDatabase().db(): " + JSON.stringify(mongodb.getDatabase().db()));
-  // console.log("mongodb.getDatabase().db().collection(COLLECTION_NAME): " + JSON.stringify(mongodb.getDatabase().db().collection(COLLECTION_NAME)));
-  result.toArray((err, lists) => {
-    if (err) {
-      res.status(400).json({ message: err });
-    }
+const getAll = async (req, res) => {  // GET Request
+  //#swagger.tags=['Clients']
+  const result = await mongodb.getDatabase().db().collection('clients').find();
+  result.toArray().then((clients) => {
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(lists);
+    res.status(200).json(clients);
   });
-
-  // .then((users) => {
-  //   res.setHeader('Content-Type', 'application/json');
-  // res.status(200).json(users);
-  // });
 };
 
-const getSingleClient = async (req, res) => {
+const getSingle = async (req, res) => { // GET Request
+  //#swagger.tags=['Clients']
+  if (!ObjectId.isValid(req.params.id)) {
+    res.status(400).json('Must have a valid client id to get a single client');
+  }
   const clientId = new ObjectId(req.params.id);
-  const result = await mongodb
-    .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .find({ _id: clientId });
-  result.toArray((err, result) => {
-    if (err) {
-      res.status(400).json({ message: err });
-    }
+  const result = await mongodb.getDatabase().db().collection('clients').find({ _id: clientId });
+  result.toArray().then((clients) => {
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(result[0]);
+    res.status(200).json(clients);
   });
-
-  // .then((users) => {
-  //   res.setHeader('Content-Type', 'application/json');
-  //   res.status(200).json(users[0]);
-  // });
 };
 
-const createClient = async (req, res) => {
+const createClient = async (req, res) => { // POST Request
+  //#swagger.tags=['Clients']
   const client = {
-    username: 'required|string',
-    name: 'required|string',
-    address: 'string',
-    birthdate: 'datetime',
-    email: 'string',
-    active: 'boolean',
-    hotelss: 'array'
+    username: req.body.username,
+    name: req.body.name,
+    address: req.body.address,
+    birthdate: req.body.birthdate,
+    email: req.body.email,
+    membershipStatus: req.body.membershipStatus,
+    membershipTier: req.body.membershipTier
+  };
+  const response = await mongodb.getDatabase().db().collection('clients').insertOne(client);
+  if (response.acknowledged) {
+    res.status(201).send();
+  } else {
+    res.status(500).json(response.error || 'An error occurred while creating the client.');
+  }
+};
+
+const updateClient = async (req, res) => { // PUT Request
+  //#swagger.tags=['Clients']
+  if (!ObjectId.isValid(req.params.id)) {
+    res.status(400).json('You must have a valid client id to update a client');
+  }
+  const clientId = new ObjectId(req.params.id);
+  const client = {
+    username: req.body.username,
+    name: req.body.name,
+    address: req.body.address,
+    birthdate: req.body.birthdate,
+    email: req.body.email,
+    membershipStatus: req.body.membershipStatus,
+    membershipTier: req.body.membershipTier
   };
   const response = await mongodb
     .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
-    .insertOne(client);
-
-  console.log('response: ' + JSON.stringify(response));
-  if (response.acknowledged == true) {
-    res.status(201).send();
-  } else {
-    res.status(500).json(response.error || 'Failed to create user.');
-  }
-};
-const updateClient = async (req, res) => {
-  const clientId = new ObjectId(req.params.id);
-  const client = req.body.clientIds
-  const response = await mongodb
-    .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
+    .db()
+    .collection('clients')
     .replaceOne({ _id: clientId }, client);
-  console.log('response: ' + JSON.stringify(response));
   if (response.modifiedCount > 0) {
     res.status(204).send();
   } else {
-    res.status(500).json(response.error || 'Failed to update user.');
+    res.status(500).json(response.error || 'An error occurred while updating the client.');
   }
 };
-const deleteClient = async (req, res) => {
-  const clientId = new ObjectId(req.params.id);
 
+const deleteClient = async (req, res) => { // DELETE Request
+  //#swagger.tags=['Clients']
+  if (!ObjectId.isValid(req.params.id)) {
+    res.status(400).json('You must have a valid client id to delete a client');
+  }
+  const clientId = new ObjectId(req.params.id);
   const response = await mongodb
     .getDatabase()
-    .db(DATABASE)
-    .collection(COLLECTION_NAME)
+    .db()
+    .collection('clients')
     .deleteOne({ _id: clientId });
-  console.log('response: ' + JSON.stringify(response));
   if (response.deletedCount > 0) {
     res.status(204).send();
   } else {
-    res.status(500).json(response.error || 'Failed to update user.');
+    res.status(500).json(response.error || 'An error occurred while deleting the client.');
   }
 };
 
 module.exports = {
-  getAllClient,
-  getSingleClient,
+  getAll,
+  getSingle,
   createClient,
   updateClient,
   deleteClient
